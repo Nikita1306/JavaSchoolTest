@@ -90,6 +90,8 @@ public class JavaSchoolStarter {
         System.out.println(condition);
         Map<String,Object> row = new HashMap<>();
         String[] updateRows = request.substring(0, request.toLowerCase().indexOf("where")).split(",");
+
+        //TODO: выделить цикл в отдельную функцию
         for (String i : updateRows) {
             i = i.trim();
             String[] pair = i.split("=");
@@ -118,27 +120,97 @@ public class JavaSchoolStarter {
                 }
             }
         }
+        String operation = "";
+        String[] newValues =new String[2];
+        if(condition.contains(">=")) {
+            operation = ">=";
+            newValues = condition.replace("'", "").split(">=");
+        }
+        if(condition.contains("<=")) {
+            operation = "<=";
+            newValues = condition.replace("'", "").split("<=");
+        }
+        if(condition.contains("=")) {
+            operation = "=";
+            newValues = condition.replace("'", "").split("=");
+        }
+        if(condition.contains("!=")) {
+            operation = "!=";
+            newValues = condition.replace("'", "").split("!=");
+        }
+        if(condition.contains(">")) {
+            operation = ">";
+            newValues = condition.replace("'", "").split(">");
+        }
+        if(condition.contains("<")) {
+            operation = "<";
+            newValues = condition.replace("'", "").split("<");
+        }
+        System.out.println(row);
         for (int i = 0; i < data.size(); i++) {
             Map<String, Object> tempValue = data.get(i);
-            if (row.containsKey("active") && row.get("active") != data.get(i).get("active")) {
+            if (row.containsKey("active") && row.get("active") != tempValue.get("active")) {
                 tempValue.put("active", row.get("active"));
             }
-            if (row.containsKey("cost") && row.get("cost") != data.get(i).get("cost")) {
-                tempValue.put("cost", row.get("cost"));
+            switch(operation) {
+                case ">=": {
+                    if (row.containsKey("cost") && row.get("cost") != tempValue.get("cost")
+                            && Double.parseDouble((String) tempValue.get(newValues[0])) >= Double.parseDouble(newValues[1])) {
+                        tempValue.put("cost", row.get("cost"));
+                    }
+                    if (row.containsKey("id") && row.get("id") != tempValue.get("id")
+                            && Long.parseLong((String) tempValue.get(newValues[0])) >= Long.parseLong(newValues[1])) {
+                        tempValue.put("id", row.get("id"));
+                    }
+                    if (row.containsKey("age") && row.get("age") != tempValue.get("age")
+                            && Long.parseLong((String) tempValue.get(newValues[0])) >= Long.parseLong(newValues[1])) {
+                        tempValue.put("age", row.get("age"));
+                    }
+                    break;
+                }
+                case "<=": {
+                    break;
+                }
+                case "=": {
+                    if (row.containsKey("cost") && row.get("cost") != tempValue.get("cost")
+                            && (Double)tempValue.get(newValues[0]) == Double.parseDouble(newValues[1])) {
+                        tempValue.put("cost", row.get("cost"));
+                    }
+                    if (row.containsKey("id") && row.get("id") != tempValue.get("id")
+                            && (Long)tempValue.get(newValues[0]) == Long.parseLong(newValues[1])) {
+                        tempValue.put("id", row.get("id"));
+                    }
+                    if (row.containsKey("age") && row.get("age") != tempValue.get("age")
+                            && (Long) tempValue.get(newValues[0]) == Long.parseLong(newValues[1])) {
+                        tempValue.put("age", row.get("age"));
+                    }
+                    break;
+                }
+                case "!=": {
+                    break;
+                }
+                case "<": {
+                    break;
+                }
+                case ">": {
+                    break;
+                }
             }
-            if (row.containsKey("id") && row.get("id") != data.get(i).get("id")) {
-                tempValue.put("id", row.get("id"));
-            }
-            if (row.containsKey("age") && row.get("age") != data.get(i).get("age")) {
-                tempValue.put("age", row.get("age"));
-            }
-            if (row.containsKey("lastname") && row.get("lastname") != data.get(i).get("lastname")) {
+//            if (row.containsKey("cost") && row.get("cost") != tempValue.get("cost")) {
+//                tempValue.put("cost", row.get("cost"));
+//            }
+//            if (row.containsKey("id") && row.get("id") != tempValue.get("id")) {
+//                tempValue.put("id", row.get("id"));
+//            }
+//            if (row.containsKey("age") && row.get("age") != tempValue.get("age")) {
+//                tempValue.put("age", row.get("age"));
+//            }
+            if (row.containsKey("lastname") && row.get("lastname") != tempValue.get("lastname")) {
                 tempValue.put("lastname", row.get("lastname"));
             }
             data.set(i, tempValue);
         }
-//        inputRow.add(row);
-//        return inputRow;
         return data;
     }
+
 }
