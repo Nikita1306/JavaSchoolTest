@@ -2,7 +2,6 @@ package com.digdes.school;
 
 import javax.script.ScriptException;
 import java.util.*;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -30,26 +29,24 @@ public class JavaSchoolStarter {
         //Здесь начало исполнения вашего кода
         String operation = request.toLowerCase().substring(0, 6);
         switch (operation.toLowerCase()) {
-            case insert: {
+            case insert -> {
                 return insertOperation(request.substring(request.toLowerCase().indexOf("values") + 6));
             }
-            case update: {
+            case update -> {
                 return updateOperation(request.substring(request.toLowerCase().indexOf("values") + 6));
             }
-            case delete: {
+            case delete -> {
                 return deleteOperation(request);
             }
-            case select: {
+            case select -> {
                 return selectOperation(request);
             }
-
         }
         return new ArrayList<>();
     }
 
     private List<Map<String, Object>> insertOperation(String request) {
         List<Map<String, Object>> inputRow = new ArrayList<>();
-        System.out.println(request);
         Map<String, Object> row = new HashMap<>();
         String[] dataSplitted = request.split(",");
         getUpdatedRows(row, dataSplitted);
@@ -76,12 +73,9 @@ public class JavaSchoolStarter {
         Set<Integer> resultSet = new HashSet<>();
         getUpdatedRows(row, updateRows);
         conditionHandler(request, resultSet);
-        System.out.println("ROW: " + row);
         List<Map<String, Object>> updateData = new ArrayList<>();
-        System.out.println("UPDATING");
         for (Integer integer : resultSet) {
             for (Map.Entry<String,Object> entry : row.entrySet()) {
-                System.out.println(entry);
                 if (entry.getValue() != null)
                     data.get(integer).put(entry.getKey(), entry.getValue());
                 else data.get(integer).remove(entry.getKey());
@@ -89,7 +83,6 @@ public class JavaSchoolStarter {
             }
             updateData.add(new HashMap<>(data.get(integer)));
         }
-        System.out.println(resultSet);
         return updateData;
     }
 
@@ -99,7 +92,6 @@ public class JavaSchoolStarter {
         if (!request.toLowerCase().contains("where")) {
             deletedRows = data.stream().toList();
             data.clear();
-            System.out.println("Data: " + Arrays.toString(data.toArray()));
             return deletedRows;
         }
         Set<Integer> resultSet = new HashSet<>();
@@ -108,7 +100,6 @@ public class JavaSchoolStarter {
         for (Integer integer : resultSet) {
             deletedRows.add(data.remove((int)integer));
         }
-        System.out.println(resultSet);
         return deletedRows;
     }
 
@@ -120,11 +111,9 @@ public class JavaSchoolStarter {
         }
         Set<Integer> resultSet = new HashSet<>();
         conditionHandler(request, resultSet);
-        System.out.println("SELECT");
         for (Integer integer : resultSet) {
             selectedRows.add(data.get(integer));
         }
-        System.out.println(resultSet);
         return selectedRows;
     }
 
@@ -135,19 +124,16 @@ public class JavaSchoolStarter {
             String operation = "";
             String[] newValues = new String[2];
             basicConditionHandler(resultSet, operation, newValues, condition);
-            System.out.println(resultSet);
         }
         else
         if (condition.toLowerCase().contains(" or ")) {
             test = condition.split(" (?i)or ");
         } else {
-            System.out.println("ELSE");
             String operation = "";
             String[] newValues = new String[2];
             String[] andCond = condition.split(" (?i)and ");
             basicConditionHandler(resultSet, operation, newValues, andCond[0]);
             for (int i = 1; i < andCond.length; i++) {
-                System.out.println("AND");
                 andHandler(resultSet, operation, newValues, andCond[i]);
             }
         }
@@ -175,19 +161,13 @@ public class JavaSchoolStarter {
     private void basicConditionHandler(Set<Integer> resultSet, String operation, String[] newValues, String andFromMultiple) {
         String[] splittedAnd = getOperation(andFromMultiple, operation, newValues);
         splittedAnd[1] = splittedAnd[1].equalsIgnoreCase("lastname") ? "lastName" : splittedAnd[1];
-        System.out.println(splittedAnd[0]);
-        System.out.println(splittedAnd[1]);
         Pattern pattern = Pattern.compile("\\b(active|cost|age|lastname|id)\\b", Pattern.CASE_INSENSITIVE);
-        System.out.println("CHECK PATTERN " + !pattern.matcher(splittedAnd[1]).find());
         if (!pattern.matcher(splittedAnd[1]).find()) {
-            System.out.println("CHECK");
             throw new IllegalArgumentException();
         }
-        System.out.println(splittedAnd[2]);
         for (int i = 0; i < data.size(); i++) {
             switch (splittedAnd[0]) {
                 case ">=" -> {
-                    System.out.println(">=");
                     if (compareValues(splittedAnd[1], data.get(i).get(splittedAnd[1]),
                             ">=", splittedAnd[2]))
                         resultSet.add(i);
@@ -269,22 +249,25 @@ public class JavaSchoolStarter {
 
     private void andHandler(Set<Integer> resultSet, String operation, String[] newValues, String andFromMultiple) {
         String[] splittedAnd = getOperation(andFromMultiple, operation, newValues);
-        System.out.println(splittedAnd[0]);
-        System.out.println(splittedAnd[1]);
+        splittedAnd[1] = splittedAnd[1].equalsIgnoreCase("lastname") ? "lastName" : splittedAnd[1];
         Pattern pattern = Pattern.compile("active|cost|age|lastname|id", Pattern.CASE_INSENSITIVE);
         if (!pattern.matcher(splittedAnd[1]).find()) {
             throw new IllegalArgumentException();
         }
-        System.out.println(splittedAnd[2]);
         Set<Integer> addSetCopy = new HashSet<>(resultSet);
         for (Integer index : addSetCopy) {
             switch (splittedAnd[0]) {
                 case ">=" -> {
+                    if (splittedAnd[1].equalsIgnoreCase("lastname") || splittedAnd[1].equalsIgnoreCase("active"))
+                        throw new IllegalArgumentException();
                     if (!compareValues(splittedAnd[1], data.get(index).get(splittedAnd[1]),
-                            ">=", splittedAnd[2]))
+                            splittedAnd[0], splittedAnd[2])) {
                         resultSet.remove(index);
+                    }
                 }
                 case "<=" -> {
+                    if (splittedAnd[1].equalsIgnoreCase("lastname") || splittedAnd[1].equalsIgnoreCase("active"))
+                        throw new IllegalArgumentException();
                     if (!compareValues(splittedAnd[1], data.get(index).get(splittedAnd[1]),
                             "<=", splittedAnd[2]))
                         resultSet.remove(index);
@@ -301,14 +284,19 @@ public class JavaSchoolStarter {
                         resultSet.remove(index);
                 }
                 case "<" -> {
+                    if (splittedAnd[1].equalsIgnoreCase("lastname") || splittedAnd[1].equalsIgnoreCase("active"))
+                        throw new IllegalArgumentException();
                     if (!compareValues(splittedAnd[1], data.get(index).get(splittedAnd[1]),
                             "<", splittedAnd[2]))
                         resultSet.remove(index);
                 }
                 case ">" -> {
+                    if (splittedAnd[1].equalsIgnoreCase("lastname") || splittedAnd[1].equalsIgnoreCase("active"))
+                        throw new IllegalArgumentException();
                     if (!compareValues(splittedAnd[1], data.get(index).get(splittedAnd[1]),
-                            ">", splittedAnd[2]))
+                            ">", splittedAnd[2])) {
                         resultSet.remove(index);
+                    }
                 }
                 case "like" -> {
                     if (!splittedAnd[1].equalsIgnoreCase("lastname"))
@@ -361,10 +349,9 @@ public class JavaSchoolStarter {
 
     private boolean compareValues (String column ,Object value1, String condition, String value2) {
         column = column.toLowerCase();
-        System.out.println(value1);
         if (value1 == null)
             return false;
-        switch (condition) {
+        switch (condition.trim()) {
             case ">=" -> {
                 switch (column) {
                     case "id", "age" -> {
@@ -373,10 +360,10 @@ public class JavaSchoolStarter {
                     case "cost" -> {
                         return (Double) value1 >= Double.parseDouble(value2);
                     }
-                    case "lastname", "active"-> throw new IllegalArgumentException();
-
+                    case "lastname", "active" -> {
+                        throw new IllegalArgumentException();
+                    }
                 }
-                break;
             }
             case "<=" -> {
                 switch (column) {
@@ -388,7 +375,6 @@ public class JavaSchoolStarter {
                     }
                     case "lastname", "active"-> throw new IllegalArgumentException();
                 }
-                break;
             }
             case "=" -> {
                 switch (column) {
@@ -402,11 +388,9 @@ public class JavaSchoolStarter {
                         return (Boolean) value1 == Boolean.valueOf(value2);
                     }
                     case "lastname" -> {
-                        System.out.println("Compare last " + value1 + " " + value2);
                         return value1.equals(value2);
                     }
                 }
-                break;
             }
             case "!=" -> {
                 switch (column) {
@@ -420,11 +404,9 @@ public class JavaSchoolStarter {
                         return (Boolean) value1 != Boolean.valueOf(value2);
                     }
                     case "lastname" -> {
-                        System.out.println(value1 + " " + value2);
                         return !value1.equals(value2);
                     }
                 }
-                break;
             }
             case "<" -> {
                 switch (column) {
@@ -436,7 +418,6 @@ public class JavaSchoolStarter {
                     }
                     case "lastname", "active"-> throw new IllegalArgumentException();
                 }
-                break;
             }
             case ">" -> {
                 switch (column) {
@@ -448,7 +429,6 @@ public class JavaSchoolStarter {
                     }
                     case "lastname", "active"-> throw new IllegalArgumentException();
                 }
-                break;
             }
         }
         return true;
@@ -457,6 +437,11 @@ public class JavaSchoolStarter {
         if (condition.contains(">=")) {
             operation = ">=";
             newValues = condition.replace("'", "").split(">=");
+            return new String[]{operation, newValues[0].trim(), newValues[1].trim()};
+        }
+        if (condition.contains("!=")) {
+            operation = "!=";
+            newValues = condition.replace("'", "").split("!=");
             return new String[]{operation, newValues[0].trim(), newValues[1].trim()};
         }
         if (condition.contains("<=")) {
@@ -469,11 +454,7 @@ public class JavaSchoolStarter {
             newValues = condition.replace("'", "").split("=");
             return new String[]{operation, newValues[0].trim(), newValues[1].trim()};
         }
-        if (condition.contains("!=")) {
-            operation = "!=";
-            newValues = condition.replace("'", "").split("!=");
-            return new String[]{operation, newValues[0].trim(), newValues[1].trim()};
-        }
+
         if (condition.contains(">")) {
             operation = ">";
             newValues = condition.replace("'", "").split(">");
@@ -492,7 +473,6 @@ public class JavaSchoolStarter {
         if (condition.contains("like")) {
             operation = "like";
             newValues = condition.replace("'", "").split("like");
-            System.out.println("ARRAYS" + Arrays.toString(newValues));
             return new String[]{operation, newValues[0].trim(), newValues[1].trim()};
         }
 
